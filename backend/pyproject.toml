@@ -1,0 +1,26 @@
+[project]
+name = "fridge-manager-backend"
+version = "0.1.0"
+description = "鲜知 fridge · AI 冰箱管家 后端服务"
+requires-python = ">=3.10"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+exclude = ["alembic/versions", "__pycache__", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM", "S"]
+ignore = ["E501", "B008", "S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]
+"alembic/*" = ["S101"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "__pycache__"]
+skips = ["B101"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
