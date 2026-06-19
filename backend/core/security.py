@@ -23,6 +23,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # HTTP Bearer 安全方案
 security = HTTPBearer(auto_error=False)
 
+# Token 类型常量（避免安全扫描将字面量误判为硬编码密码）
+ACCESS_TOKEN_TYPE = "access"  # nosec: B105 # noqa: S105
+REFRESH_TOKEN_TYPE = "refresh"  # nosec: B105 # noqa: S105
+
 
 def hash_password(password: str) -> str:
     """对明文密码进行 bcrypt 哈希。"""
@@ -47,7 +51,7 @@ def create_access_token(user_id: str | UUID) -> str:
     return _create_token(
         data={"sub": str(user_id)},
         expires_delta=timedelta(minutes=settings.JWT_EXPIRE_MINUTES),
-        token_type="access",  # noqa: S106
+        token_type=ACCESS_TOKEN_TYPE,
     )
 
 
@@ -56,14 +60,13 @@ def create_refresh_token(user_id: str | UUID) -> str:
     return _create_token(
         data={"sub": str(user_id)},
         expires_delta=timedelta(days=settings.JWT_REFRESH_EXPIRE_DAYS),
-        token_type="refresh",  # noqa: S106
+        token_type=REFRESH_TOKEN_TYPE,
     )
 
 
 def create_token_pair(user_id: str | UUID) -> tuple[str, str]:
     """创建访问令牌与刷新令牌对。"""
     return create_access_token(user_id), create_refresh_token(user_id)
-
 
 def decode_token(token: str) -> dict[str, Any]:
     """解码并验证 JWT Token，失败抛出 JWTError。"""
@@ -91,7 +94,7 @@ async def get_current_user(
         ) from None
 
     token_type = payload.get("type")
-    if token_type != "access":  # noqa: S105
+    if token_type != ACCESS_TOKEN_TYPE:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={"code": settings.CODE_AUTH_ERROR, "message": "令牌类型错误"},

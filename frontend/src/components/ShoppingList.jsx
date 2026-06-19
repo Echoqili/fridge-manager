@@ -40,16 +40,16 @@ function ShoppingList({ items, onToggle, onDelete }) {
             actions={
               onDelete && typeof item === 'object'
                 ? [
-                    <Popconfirm
-                      key="delete"
-                      title="确定删除？"
-                      onConfirm={() => handleDelete(item)}
-                      okText="删除"
-                      cancelText="取消"
-                    >
-                      <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-                    </Popconfirm>
-                  ]
+                  <Popconfirm
+                    key="delete"
+                    title="确定删除？"
+                    onConfirm={() => handleDelete(item)}
+                    okText="删除"
+                    cancelText="取消"
+                  >
+                    <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                  </Popconfirm>
+                ]
                 : undefined
             }
           >

@@ -99,7 +99,6 @@ function HomePage() {
   const [recipes, setRecipes] = useState([]);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [shoppingItems, setShoppingItems] = useState([]);
-  const [shoppingLoading, setShoppingLoading] = useState(false);
 
   // 统计数据
   const stats = useMemo(() => {
@@ -214,14 +213,11 @@ function HomePage() {
       setShoppingItems(Array.from(missing).map((name) => ({ name, checked: false })));
       return;
     }
-    setShoppingLoading(true);
     try {
       const data = await shoppingApi.getShoppingList();
       setShoppingItems(Array.isArray(data) ? data : []);
     } catch (e) {
       setShoppingItems([]);
-    } finally {
-      setShoppingLoading(false);
     }
   }, [isDemo, user, recipes, ingredients]);
 

@@ -39,6 +39,7 @@ function ECharts({ option, style = {}, ...rest }) {
       chartInstance.current?.dispose();
       chartInstance.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
