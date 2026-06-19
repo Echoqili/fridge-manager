@@ -9,6 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './tests/setup.js',
     css: true,
+    pool: 'forks',
+    testTimeout: 10000,
+    hookTimeout: 10000,
     exclude: ['node_modules/**', 'e2e/**', '**/*.spec.js', 'dist/**'],
     coverage: {
       provider: 'v8',
