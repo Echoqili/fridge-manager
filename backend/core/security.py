@@ -68,6 +68,7 @@ def create_token_pair(user_id: str | UUID) -> tuple[str, str]:
     """创建访问令牌与刷新令牌对。"""
     return create_access_token(user_id), create_refresh_token(user_id)
 
+
 def decode_token(token: str) -> dict[str, Any]:
     """解码并验证 JWT Token，失败抛出 JWTError。"""
     return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
