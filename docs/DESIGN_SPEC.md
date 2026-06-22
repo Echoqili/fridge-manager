@@ -217,7 +217,7 @@ fridge-manager-demo/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── README.md
-└── index.html                        # 原 Demo（保留兼容）
+└── legacy-demo.html                  # 原静态 Demo（已归档，不再作为首页）
 ```
 
 ---
@@ -775,7 +775,7 @@ def sample_ingredient():
 - 构建命令：`npm run build`
 - 产物目录：`frontend/dist`
 - 部署方式：GitHub Actions 自动部署到 GitHub Pages
-- 访问地址：`https://echoqili.github.io/fridge-manager-demo/`
+- 访问地址：`https://echoqili.github.io/fridge-manager/`
 
 ### 10.3 后端部署（Docker）
 

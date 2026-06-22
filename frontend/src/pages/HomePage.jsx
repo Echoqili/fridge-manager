@@ -38,11 +38,21 @@ import { STORAGE_LOCATIONS } from '../config';
 
 const { Title, Text } = Typography;
 
+// 根据菜名生成配图 URL（使用 Pollinations.ai，免费且无需 API Key）
+function generateRecipeImageUrl(name) {
+  const seed = name.split('').reduce((sum, c) => sum + c.charCodeAt(0), 0) % 10000;
+  const prompt = encodeURIComponent(
+    `delicious ${name} food photography, appetizing, warm lighting, top view`
+  );
+  return `https://image.pollinations.ai/prompt/${prompt}?width=512&height=512&nologo=true&seed=${seed}`;
+}
+
 // 本地兜底菜谱库（API 不可用时使用）
 const LOCAL_RECIPES = [
   {
     recipe_id: 'r1',
     name: '西红柿炒鸡蛋',
+    image_url: generateRecipeImageUrl('西红柿炒鸡蛋'),
     tags: ['家常', '快手', '高蛋白'],
     cook_time: 10,
     calories: 280,
@@ -53,6 +63,7 @@ const LOCAL_RECIPES = [
   {
     recipe_id: 'r2',
     name: '土豆炖牛肉',
+    image_url: generateRecipeImageUrl('土豆炖牛肉'),
     tags: ['下饭', '暖胃', '高蛋白'],
     cook_time: 45,
     calories: 520,
@@ -63,6 +74,7 @@ const LOCAL_RECIPES = [
   {
     recipe_id: 'r3',
     name: '蒜蓉西兰花',
+    image_url: generateRecipeImageUrl('蒜蓉西兰花'),
     tags: ['低脂', '健康', '素食'],
     cook_time: 8,
     calories: 120,
@@ -73,6 +85,7 @@ const LOCAL_RECIPES = [
   {
     recipe_id: 'r4',
     name: '香蕉牛奶昔',
+    image_url: generateRecipeImageUrl('香蕉牛奶昔'),
     tags: ['早餐', '甜品', '补钙'],
     cook_time: 3,
     calories: 210,
@@ -83,6 +96,7 @@ const LOCAL_RECIPES = [
   {
     recipe_id: 'r5',
     name: '鸡肉蔬菜炒饭',
+    image_url: generateRecipeImageUrl('鸡肉蔬菜炒饭'),
     tags: ['一人食', '饱腹', '均衡'],
     cook_time: 15,
     calories: 450,

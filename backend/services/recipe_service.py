@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import urllib.parse
 from typing import Any
 
 from openai import AsyncOpenAI
@@ -17,6 +18,25 @@ from models.recipe import RecipeIngredientModel, RecipeModel
 from schemas.recipe import RecipeIngredient, RecipeResponse, RecipeStep
 
 logger = logging.getLogger(__name__)
+
+
+# 免费图片生成服务（Pollinations.ai），无需 API Key
+_IMAGE_BASE_URL = "https://image.pollinations.ai/prompt"
+_IMAGE_PARAMS = "width=512&height=512&nologo=true&seed="
+
+
+def _generate_recipe_image_url(name: str, description: str | None = None) -> str:
+    """根据菜谱名称生成对应的食物图片 URL。
+
+    使用 Pollinations.ai 根据菜名实时生成配图；若图片服务不可用，前端会回退到占位图。
+    """
+    prompt = f"delicious {name} food photography, appetizing, warm lighting, top view"
+    if description:
+        prompt = f"{prompt}, {description}"
+    # 使用菜名作为 seed 保证同一道菜图片稳定
+    seed = sum(ord(c) for c in name) % 10000
+    encoded_prompt = urllib.parse.quote(prompt)
+    return f"{_IMAGE_BASE_URL}/{encoded_prompt}?{_IMAGE_PARAMS}{seed}"
 
 
 # 本地预设菜谱库（至少 5 道菜）
@@ -130,6 +150,10 @@ def _build_recipe_response(
         user_set = {name.lower() for name in user_ingredients}
         match_count = sum(1 for ing in ingredients if ing.ingredient_name.lower() in user_set)
 
+    image_url = recipe_data.get("image_url")
+    if not image_url:
+        image_url = _generate_recipe_image_url(recipe_data["name"], recipe_data.get("description"))
+
     return RecipeResponse(
         recipe_id=recipe_data.get("recipe_id", ""),
         name=recipe_data["name"],
@@ -138,7 +162,7 @@ def _build_recipe_response(
         calories=recipe_data.get("calories"),
         servings=recipe_data.get("servings"),
         steps=steps,
-        image_url=recipe_data.get("image_url"),
+        image_url=image_url,
         source=source,  # type: ignore[arg-type]
         ingredients=ingredients,
         match_count=match_count,
@@ -202,15 +226,18 @@ def _parse_ai_recipes(raw_content: str) -> list[dict[str, Any]] | None:
             if not isinstance(item, dict):
                 continue
             # 规范化字段
+            name = item.get("name", "AI 推荐菜谱")
+            description = item.get("description", "")
             recipe = {
-                "name": item.get("name", "AI 推荐菜谱"),
-                "description": item.get("description", ""),
+                "name": name,
+                "description": description,
                 "cook_time": int(item.get("cook_time", 15)),
                 "calories": float(item.get("calories", 0)),
                 "servings": int(item.get("servings", 2)),
                 "ingredients": item.get("ingredients", []),
                 "steps": item.get("steps", []),
                 "recipe_id": "",
+                "image_url": _generate_recipe_image_url(name, description),
             }
             # 确保 ingredients 字段格式正确
             normalized_ingredients = []
@@ -320,6 +347,7 @@ async def _save_ai_recipes_to_db(
             calories=recipe_data.get("calories"),
             servings=recipe_data.get("servings"),
             steps=recipe_data.get("steps", []) or [],
+            image_url=recipe_data.get("image_url"),
             source="ai",
         )
         for ing in recipe_data.get("ingredients", []):
@@ -357,6 +385,10 @@ def _recipe_model_to_response(
     user_set = {name.lower() for name in user_ingredients}
     match_count = sum(1 for ing in ingredients if ing.ingredient_name.lower() in user_set)
 
+    image_url = recipe.image_url
+    if not image_url:
+        image_url = _generate_recipe_image_url(recipe.name, recipe.description)
+
     return RecipeResponse(
         recipe_id=recipe.recipe_id,
         name=recipe.name,
@@ -365,7 +397,7 @@ def _recipe_model_to_response(
         calories=recipe.calories,
         servings=recipe.servings,
         steps=steps,
-        image_url=recipe.image_url,
+        image_url=image_url,
         source=recipe.source,  # type: ignore[arg-type]
         ingredients=ingredients,
         match_count=match_count,
