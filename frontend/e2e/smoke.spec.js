@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-// 演示模式登录辅助
+// 演示模式登录辅助：直接写入 localStorage 确保状态可靠恢复
 async function demoLogin(page) {
   await page.goto('/login');
-  await page.click('text=演示模式快速体验');
-  await page.waitForURL('**/');
+  await page.evaluate(() => {
+    localStorage.setItem('fridge_token', 'demo-token');
+    localStorage.setItem('fridge_user', JSON.stringify({ username: 'demo', user_id: 'demo' }));
+  });
+  await page.goto('/');
+  await expect(page).toHaveURL('http://localhost:3000/');
+  await expect(page.locator('text=打开冰箱，就知道今天吃什么')).toBeVisible({ timeout: 15000 });
 }
 
 test('打开首页看到冰箱看板', async ({ page }) => {
@@ -13,22 +18,24 @@ test('打开首页看到冰箱看板', async ({ page }) => {
   await expect(page).toHaveURL(/\/(login)?$/);
 });
 
-test('演示模式登录后看到冰箱看板', async ({ page }) => {
-  await demoLogin(page);
+test('演示模式按钮可点击并进入首页', async ({ page }) => {
+  await page.goto('/login');
+  await page.click('text=演示模式快速体验');
+  await expect(page).toHaveURL('http://localhost:3000/');
   await expect(page.locator('text=打开冰箱，就知道今天吃什么')).toBeVisible({ timeout: 15000 });
 });
 
 test('点击菜谱推荐导航', async ({ page }) => {
   await demoLogin(page);
   await page.click('text=菜谱推荐');
-  await expect(page).toHaveURL('**/recipes');
-  await expect(page.locator('text=菜谱推荐').first()).toBeVisible({ timeout: 15000 });
+  await expect(page).toHaveURL('http://localhost:3000/recipes');
+  await expect(page.locator('h4:has-text("菜谱推荐")').or(page.locator('text=菜谱推荐').first())).toBeVisible({ timeout: 15000 });
 });
 
 test('查看营养洞察页', async ({ page }) => {
   await demoLogin(page);
   await page.click('text=营养洞察');
-  await expect(page).toHaveURL('**/nutrition');
+  await expect(page).toHaveURL('http://localhost:3000/nutrition');
 });
 
 test('首页显示统计数据', async ({ page }) => {
@@ -58,17 +65,16 @@ test('点击生成菜谱按钮', async ({ page }) => {
   await expect(page.locator('text=AI 推荐菜谱')).toBeVisible({ timeout: 15000 });
   // 点击生成菜谱
   await page.click('text=生成菜谱');
-  // 等待菜谱加载或提示
-  await page.waitForTimeout(3000);
-  // 应该显示菜谱卡片或提示信息
-  const hasRecipe = await page.locator('[data-testid="recipe-card"]').count();
-  const hasMessage = await page.locator('.ant-message-notice').count();
-  expect(hasRecipe + hasMessage).toBeGreaterThan(0);
+  // 等待菜谱卡片或提示信息出现（后端可能较慢，给足时间）
+  await expect(
+    page.locator('[data-testid="recipe-card"]').first().or(page.locator('.ant-message-notice').first())
+  ).toBeVisible({ timeout: 15000 });
 });
 
 test('购物清单区域可见', async ({ page }) => {
   await demoLogin(page);
-  await expect(page.locator('text=购物清单')).toBeVisible({ timeout: 15000 });
+  // 使用 ant-card-head-title 精确匹配"购物清单"卡片标题
+  await expect(page.locator('.ant-card-head-title:has-text("购物清单")')).toBeVisible({ timeout: 15000 });
 });
 
 test('登出演示模式', async ({ page }) => {
