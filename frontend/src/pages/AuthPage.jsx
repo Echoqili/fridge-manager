@@ -88,7 +88,7 @@ function AuthPage() {
                 key: 'login',
                 label: '登录',
                 children: (
-                  <Form onFinish={handleLogin} layout="vertical" requiredMark={false}>
+                  <Form onFinish={handleLogin} layout="vertical" requiredMark={false} initialValues={{ username: 'admin', password: 'admin' }}>
                     <Form.Item
                       name="username"
                       label="用户名"
