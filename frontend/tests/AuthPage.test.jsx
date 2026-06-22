@@ -69,16 +69,15 @@ describe('AuthPage', () => {
     });
   });
 
-  it('登录表单提交时调用 login', async () => {
+  it('登录表单默认填充 admin 并提交时调用 login', async () => {
     const login = vi.fn().mockResolvedValue(undefined);
     renderPage({ login });
 
-    await userEvent.type(screen.getByPlaceholderText('请输入用户名'), 'testuser');
-    await userEvent.type(screen.getByPlaceholderText('请输入密码'), 'password123');
+    // 登录表单已默认填充 admin/admin，直接点击登录即可
     fireEvent.click(screen.getByRole('button', { name: /登\s*录/i }));
 
     await waitFor(() => {
-      expect(login).toHaveBeenCalledWith({ username: 'testuser', password: 'password123' });
+      expect(login).toHaveBeenCalledWith({ username: 'admin', password: 'admin' });
     });
   });
 
