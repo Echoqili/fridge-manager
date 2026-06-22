@@ -51,6 +51,13 @@ dist/
 build/
 *.egg-info/
 
+# Frontend test artifacts
+frontend/test-results/
+
+# Deployment artifacts
+*.tar.gz
+coverage.xml
+
 # Temporary
 *.tmp
 *.bak
