@@ -587,3 +587,106 @@
 2. 在虚拟机 `192.168.88.151` 上部署后端并验证完整流程
 3. 补充 RecipesPage 组件测试
 4. 优化 E2E 测试覆盖真实登录场景
+
+---
+
+## v0.7.0 — 后端部署 + E2E 修复 + OpenAI 兼容 API (2026-06-20)
+
+### 主要开发任务
+- 修复 E2E 测试 3 个失败用例（演示模式导航竞态条件）
+- 后端添加 `OPENAI_BASE_URL` 支持，适配第三方 OpenAI 兼容 API
+- 后端部署到虚拟机 `192.168.58.130`（venv + uvicorn + systemd）
+- 前端部署到同一虚拟机（nginx 反向代理，端口 8090）
+- 防火墙配置、CORS 配置、开机自启服务
+
+### 完成情况
+- [x] 修复 ProtectedRoute 竞态条件（增加 localStorage token 兜底检查）
+- [x] E2E `demoLogin` 辅助函数改为等待首页内容（3 个失败用例修复）
+- [x] 后端 `config.py`/`recipe_service.py`/`recognition_service.py` 添加 `base_url` 支持
+- [x] 配置美团 LongCat / Agnes AI 兼容 API（`agnes-2.0-flash` 模型）
+- [x] 后端部署：venv + pip（清华源）+ Alembic 迁移 + uvicorn（端口 8001）
+- [x] systemd 服务 `fridge-manager.service`（开机自启 + 崩溃重启）
+- [x] nginx 反向代理（端口 8090）：前端静态文件 + `/api/` 代理后端
+- [x] 防火墙开放端口 8001/8090
+- [x] CORS 配置：`localhost:3000`、`echoqili.github.io`、`192.168.58.130:8090`
+- [x] 前端 `config.js` 支持 `VITE_API_BASE_URL` 环境变量
+
+### 测试结果
+
+| 测试类型 | 工具 | 结果 |
+|----------|------|------|
+| 后端单元测试 | pytest | **42 passed** |
+| 前端单元测试 | Vitest | **30 passed** |
+| E2E 验证 | Playwright MCP | **3 个失败用例全部修复**（演示登录/菜谱导航/营养洞察导航） |
+| 部署验证 | curl + Playwright MCP | 健康检查 200 OK，注册 API 成功，演示模式完整可用 |
+
+### 部署架构
+
+```
+用户浏览器 → http://192.168.58.130:8090 (nginx)
+                         ├── / → 前端静态文件 (/var/www/fridge-manager/)
+                         └── /api/ → 反向代理 → http://127.0.0.1:8001 (uvicorn)
+                                                          ├── FastAPI 应用
+                                                          ├── SQLite (~/fridge-manager/backend/data/fridge.db)
+                                                          └── Agnes AI API (apihub.agnes-ai.com)
+```
+
+### 代码变更清单
+
+| 文件 | 变更类型 | 说明 |
+|------|----------|------|
+| `frontend/src/App.jsx` | 修改 | ProtectedRoute 增加 localStorage token 兜底检查，修复竞态重定向 |
+| `frontend/e2e/smoke.spec.js` | 修改 | `demoLogin` 改为等待首页内容而非 URL，避免竞态 |
+| `frontend/src/config.js` | 修改 | `API_BASE_URL` 支持 `VITE_API_BASE_URL` 环境变量 |
+| `backend/core/config.py` | 修改 | 新增 `OPENAI_BASE_URL` 配置项 |
+| `backend/services/recipe_service.py` | 修改 | AsyncOpenAI 客户端传入 `base_url` |
+| `backend/services/recognition_service.py` | 修改 | AsyncOpenAI 客户端传入 `base_url` |
+| `backend/.env.example` | 修改 | 新增 `OPENAI_BASE_URL` 示例 |
+| `docker-compose.yml` | 修改 | 新增 `OPENAI_BASE_URL` 环境变量透传 |
+
+### 回滚方案
+
+1. **前端回滚**：GitHub Pages 保留历史部署，可通过 GitHub Actions re-run 旧 commit 的部署任务回滚
+2. **后端回滚**：
+   - `sudo systemctl stop fridge-manager` 停止服务
+   - `cd ~/fridge-manager && git checkout <旧commit>` 回退代码
+   - `source venv/bin/activate && pip install -r backend/requirements.txt` 更新依赖
+   - `PYTHONPATH=. ../venv/bin/alembic downgrade -1` 回退数据库迁移
+   - `sudo systemctl start fridge-manager` 重启服务
+3. **数据库回滚**：Alembic 支持 `alembic downgrade <revision>` 逐步回退，SQLite 文件可手动备份恢复
+4. **nginx 回滚**：`sudo rm /etc/nginx/sites-enabled/fridge-manager && sudo systemctl restart nginx`
+
+### 未解决问题
+
+1. Agnes AI 的 `agnes-2.0-flash` 模型支持文本 + 视觉理解，图像识别可用；`agnes-image-2.x-flash` 仅用于文生图，不可用于视觉识别
+2. GitHub Pages 前端（HTTPS）无法直接调用 VM 后端（HTTP），混合内容被浏览器阻止；VM 端 8090 端口提供完整功能
+3. Ant Design 全量导入问题仍未解决（遗留自 v0.6.0）
+
+---
+
+## v0.7.1 — 项目迁移：VM 130 → 131 (2026-06-20)
+
+### 迁移内容
+- 将 `192.168.58.130` 上的 fridge-manager 全套配置完整迁移至 `192.168.58.131`
+- 清理 130 上的所有项目相关文件
+
+### 完成情况
+- [x] 打包项目文件（代码、.env、前端构建产物、docker-compose、Dockerfile），排除 venv
+- [x] 通过本地中转传输至 131
+- [x] 131 环境准备：安装 nginx、python3-venv
+- [x] 131 创建 venv + 清华源 pip 安装依赖
+- [x] 131 Alembic 数据库迁移
+- [x] 131 systemd 服务 `fridge-manager.service`（开机自启 + 崩溃重启）
+- [x] 131 nginx 反向代理（端口 8090）：前端 + `/api/` 代理
+- [x] 131 防火墙开放端口 22/8001/8090
+- [x] 131 CORS 配置增加 131 地址
+- [x] 130 清理：停止并删除 systemd 服务、删除 nginx 配置、删除项目目录、删除防火墙规则
+
+### 部署状态（迁移后）
+
+| 组件 | 旧地址 | 新地址 | 状态 |
+|------|--------|--------|------|
+| 后端 API | `http://192.168.58.130:8001` | `http://192.168.58.131:8001` | ✅ |
+| 前端 | `http://192.168.58.130:8090` | `http://192.168.58.131:8090` | ✅ |
+| API 代理 | 130 nginx | 131 nginx | ✅ |
+| 系统服务 | 130 systemd | 131 systemd | ✅ |

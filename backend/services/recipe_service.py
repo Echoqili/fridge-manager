@@ -252,7 +252,10 @@ async def _generate_recipes_with_openai(user_ingredients: list[str], limit: int)
     if not settings.OPENAI_API_KEY:
         return None
     try:
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = AsyncOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.OPENAI_BASE_URL or None,
+        )
         response = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[

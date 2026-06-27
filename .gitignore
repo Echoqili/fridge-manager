@@ -51,6 +51,13 @@ dist/
 build/
 *.egg-info/
 
+# Playwright / E2E
+frontend/test-results/
+frontend/playwright-report/
+
+# Trae IDE local config
+.trae/
+
 # Temporary
 *.tmp
 *.bak

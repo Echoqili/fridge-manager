@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-// 演示模式登录辅助
+// 演示模式登录辅助：等待首页内容渲染完成，避免 URL 变化与 React 状态提交的竞态
 async function demoLogin(page) {
   await page.goto('/login');
   await page.click('text=演示模式快速体验');
-  await page.waitForURL('**/');
+  // 等待首页标志性内容出现，确保 ProtectedRoute 已通过且页面已渲染
+  await expect(page.locator('text=打开冰箱，就知道今天吃什么')).toBeVisible({ timeout: 15000 });
 }
 
 test('打开首页看到冰箱看板', async ({ page }) => {

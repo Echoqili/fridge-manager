@@ -62,7 +62,10 @@ async def _recognize_with_openai(image_bytes: bytes) -> list[RecognitionResult] 
     try:
         from openai import AsyncOpenAI
 
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = AsyncOpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.OPENAI_BASE_URL or None,
+        )
         base64_image = _encode_image(image_bytes)
 
         response = await client.chat.completions.create(

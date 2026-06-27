@@ -1,5 +1,6 @@
 // 前端全局配置
-export const API_BASE_URL = '/api/v1';
+// 开发环境使用相对路径（Vite 代理），生产环境通过 VITE_API_BASE_URL 指定后端地址
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 export const TOKEN_KEY = 'fridge_token';
 export const REFRESH_TOKEN_KEY = 'fridge_refresh_token';

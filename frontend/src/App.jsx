@@ -5,10 +5,13 @@ import RecipesPage from './pages/RecipesPage';
 import NutritionPage from './pages/NutritionPage';
 import AuthPage from './pages/AuthPage';
 import { useApp } from './contexts/AppContext';
+import { TOKEN_KEY } from './config';
 
 function ProtectedRoute({ children }) {
   const { user } = useApp();
-  if (!user) {
+  // 兜底检查 localStorage token，避免登录导航时 user 状态尚未提交导致误重定向
+  const hasToken = localStorage.getItem(TOKEN_KEY);
+  if (!user && !hasToken) {
     return <Navigate to="/login" replace />;
   }
   return children;
