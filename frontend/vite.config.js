@@ -4,11 +4,14 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages 部署时可通过 BASE_PATH 环境变量指定子路径，如 /fridge-manager-demo/
+  base: process.env.BASE_PATH || '/',
   server: {
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // 通过环境变量支持 E2E 真实后端测试指向虚拟机或远程服务
+        target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8000',
         changeOrigin: true
       }
     }

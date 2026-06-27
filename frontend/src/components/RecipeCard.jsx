@@ -1,15 +1,33 @@
+import { useState } from 'react';
 import { Card, Tag, Space, Typography } from 'antd';
 import { ClockCircleOutlined, FireOutlined, TeamOutlined, RobotOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
 function RecipeCard({ recipe, onClick }) {
+  const [imageError, setImageError] = useState(false);
+
   const handleClick = () => {
     if (onClick) onClick(recipe);
   };
 
   const isAiSource = recipe.source === 'ai';
   const matchedCount = recipe.match_count ?? recipe.matchCount ?? 0;
+
+  const coverPlaceholder = (
+    <div
+      style={{
+        height: 160,
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: 56,
+        background: 'linear-gradient(135deg, #FDF5E8 0%, #F2CC8F 100%)',
+        borderRadius: '14px 14px 0 0'
+      }}
+    >
+      🍳
+    </div>
+  );
 
   return (
     <Card
@@ -19,25 +37,15 @@ function RecipeCard({ recipe, onClick }) {
       data-testid="recipe-card"
       style={{ cursor: onClick ? 'pointer' : 'default', height: '100%' }}
       cover={
-        recipe.image_url ? (
+        recipe.image_url && !imageError ? (
           <img
             alt={recipe.name}
             src={recipe.image_url}
+            onError={() => setImageError(true)}
             style={{ height: 160, objectFit: 'cover', borderRadius: '14px 14px 0 0' }}
           />
         ) : (
-          <div
-            style={{
-              height: 160,
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 56,
-              background: 'linear-gradient(135deg, #FDF5E8 0%, #F2CC8F 100%)',
-              borderRadius: '14px 14px 0 0'
-            }}
-          >
-            🍳
-          </div>
+          coverPlaceholder
         )
       }
     >

@@ -58,6 +58,10 @@ frontend/playwright-report/
 # Trae IDE local config
 .trae/
 
+# Deployment artifacts
+*.tar.gz
+coverage.xml
+
 # Temporary
 *.tmp
 *.bak
